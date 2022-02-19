@@ -18,7 +18,15 @@
  * element_t point to newly allocated address of element_t with char array
  * initilized.
  */
-bool q_ele_new(element_t **pptr_element, char *s);
+bool __q_ele_new(element_t **pptr_element, char *s);
+
+/*
+ * Declaring a helper functions here given to the fact that queue.h is not
+ * allowed to be changed. Allocate new node and let pointer to pointer to
+ * element_t point to newly allocated address of element_t with char array
+ * initilized.
+ */
+element_t *__q_remove(struct list_head *head, char *sp, size_t bufsize);
 
 /*
  * Create empty queue.
@@ -57,7 +65,7 @@ void q_free(struct list_head *l)
 bool q_insert_head(struct list_head *head, char *s)
 {
     element_t *element = NULL;
-    if (!q_ele_new(&element, s)) {
+    if (!__q_ele_new(&element, s)) {
         return false;
     }
     list_add(&(element->list), head);
@@ -74,7 +82,7 @@ bool q_insert_head(struct list_head *head, char *s)
 bool q_insert_tail(struct list_head *head, char *s)
 {
     element_t *element = NULL;
-    if (!q_ele_new(&element, s)) {
+    if (!__q_ele_new(&element, s)) {
         return false;
     }
     list_add_tail(&(element->list), head);
@@ -97,7 +105,7 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    return __q_remove(head->next, sp, bufsize);
 }
 
 /*
@@ -106,7 +114,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    return __q_remove(head->prev, sp, bufsize);
 }
 
 /*
@@ -179,7 +187,29 @@ void q_swap(struct list_head *head)
  * (e.g., by calling q_insert_head, q_insert_tail, or q_remove_head).
  * It should rearrange the existing ones.
  */
-void q_reverse(struct list_head *head) {}
+void q_reverse(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *prev_node = head;
+    struct list_head *next_node;
+    struct list_head *curr_node = prev_node->next;
+
+    prev_node->prev = prev_node;
+    prev_node->next = prev_node;
+
+    while (curr_node != head) {
+        next_node = curr_node->next;
+        curr_node->next = prev_node;
+        prev_node->prev = curr_node;
+
+        head->next = curr_node;
+        curr_node->prev = head;
+        prev_node = curr_node;
+        curr_node = next_node;
+    }
+}
 
 /*
  * Sort elements of queue in ascending order
@@ -193,7 +223,7 @@ void q_sort(struct list_head *head) {}
  * element_t point to newly allocated address of element_t with char array
  * initilized.
  */
-bool q_ele_new(element_t **pptr_element, char *s)
+bool __q_ele_new(element_t **pptr_element, char *s)
 {
     *pptr_element = malloc(sizeof(element_t));
     if (*pptr_element == NULL) {
@@ -207,4 +237,21 @@ bool q_ele_new(element_t **pptr_element, char *s)
     // Initilize list_head
     INIT_LIST_HEAD(&(*pptr_element)->list);
     return true;
+}
+
+/*
+ * Self-defined function to generailize q_remove_tail and q_remove_head
+ */
+element_t *__q_remove(struct list_head *head, char *sp, size_t bufsize)
+{
+    if (head == NULL || list_empty(head))
+        return NULL;
+    list_del_init(head);
+    // cppcheck-suppress nullPointer
+    element_t *element = list_entry(head, element_t, list);
+    if (sp != NULL) {
+        strncpy(sp, element->value, (bufsize - 1));
+        sp[bufsize - 1] = '\0';
+    }
+    return element;
 }
