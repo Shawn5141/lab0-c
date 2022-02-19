@@ -36,18 +36,13 @@ struct list_head *q_new()
 /* Free all storage used by queue */
 void q_free(struct list_head *l)
 {
-    if (!l)
-        return;
-    if (list_empty(l)) {
+    if (!l || list_empty(l)) {
         free(l);
         return;
     }
     element_t *element, *n;
     list_for_each_entry_safe (element, n, l, list) {
-        // Clean up char array if exist
-        if (element->value)
-            free(element->value);
-        free(element);
+        q_release_element(element);
     }
     free(l);
 }
