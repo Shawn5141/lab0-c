@@ -11,17 +11,46 @@
  *   cppcheck-suppress nullPointer
  */
 
+
+/*
+ * Declaring a helper functions here given to the fact that queue.h is not
+ * allowed to be changed. Allocate new node and let pointer to pointer to
+ * element_t point to newly allocated address of element_t with char array
+ * initilized.
+ */
+bool q_ele_new(element_t **pptr_element, char *s);
+
 /*
  * Create empty queue.
  * Return NULL if could not allocate space.
  */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *l = malloc(sizeof(struct list_head));
+    if (l == NULL)
+        return NULL;
+    INIT_LIST_HEAD(l);
+    return l;
 }
 
 /* Free all storage used by queue */
-void q_free(struct list_head *l) {}
+void q_free(struct list_head *l)
+{
+    if (!l)
+        return;
+    if (list_empty(l)) {
+        free(l);
+        return;
+    }
+    element_t *element, *n;
+    list_for_each_entry_safe (element, n, l, list) {
+        // Clean up char array if exist
+        if (element->value)
+            free(element->value);
+        free(element);
+    }
+    free(l);
+}
 
 /*
  * Attempt to insert element at head of queue.
@@ -32,6 +61,11 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    element_t *element = NULL;
+    if (!q_ele_new(&element, s)) {
+        return false;
+    }
+    list_add(&(element->list), head);
     return true;
 }
 
@@ -44,6 +78,11 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    element_t *element = NULL;
+    if (!q_ele_new(&element, s)) {
+        return false;
+    }
+    list_add_tail(&(element->list), head);
     return true;
 }
 
@@ -153,3 +192,24 @@ void q_reverse(struct list_head *head) {}
  * element, do nothing.
  */
 void q_sort(struct list_head *head) {}
+
+/*
+ * Self-defined function: Allocate new node and let pointer to pointer to
+ * element_t point to newly allocated address of element_t with char array
+ * initilized.
+ */
+bool q_ele_new(element_t **pptr_element, char *s)
+{
+    *pptr_element = malloc(sizeof(element_t));
+    if (*pptr_element == NULL) {
+        free(*pptr_element);
+        return false;
+    }
+    (*pptr_element)->value = malloc(sizeof(char) * (strlen(s) + 1));
+    if ((*pptr_element)->value == NULL) {
+        return false;
+    }
+    // Initilize list_head
+    INIT_LIST_HEAD(&(*pptr_element)->list);
+    return true;
+}
