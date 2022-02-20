@@ -73,6 +73,8 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
     element_t *element = NULL;
     if (!__q_ele_new(&element, s)) {
         return false;
@@ -90,6 +92,8 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (!head)
+        return false;
     element_t *element = NULL;
     if (!__q_ele_new(&element, s)) {
         return false;
@@ -114,6 +118,8 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (!head)
+        return NULL;
     return __q_ele_remove(head->next, sp, bufsize);
 }
 
@@ -123,6 +129,8 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
+    if (!head)
+        return NULL;
     return __q_ele_remove(head->prev, sp, bufsize);
 }
 
@@ -298,6 +306,7 @@ bool __q_ele_new(element_t **pptr_element, char *s)
     }
     (*pptr_element)->value = strdup(s);
     if ((*pptr_element)->value == NULL) {
+        free(*pptr_element);
         return false;
     }
     // Initilize list_head
