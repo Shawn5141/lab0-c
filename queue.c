@@ -14,19 +14,28 @@
 
 /*
  * Declaring a helper functions here given to the fact that queue.h is not
- * allowed to be changed. Allocate new node and let pointer to pointer to
+ * allowed to be changed.
+ */
+
+/*
+ * Allocate new node and let pointer to pointer to
  * element_t point to newly allocated address of element_t with char array
  * initilized.
  */
 bool __q_ele_new(element_t **pptr_element, char *s);
 
 /*
- * Declaring a helper functions here given to the fact that queue.h is not
- * allowed to be changed. Allocate new node and let pointer to pointer to
- * element_t point to newly allocated address of element_t with char array
- * initilized.
+ * Created generic __q_remove function called by
+ * q_remove_head and q_remove_tail. It would remove the element from list and
+ * copy out element char array to specifed buffer (sp) with given length
+ * (bufsize).
  */
 element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize);
+
+/*
+ * Find middle element of list
+ */
+element_t *__q_ele_mid(struct list_head *head);
 
 /*
  * Create empty queue.
@@ -154,6 +163,12 @@ int q_size(struct list_head *head)
 bool q_delete_mid(struct list_head *head)
 {
     // https://leetcode.com/problems/delete-the-middle-node-of-a-linked-list/
+    element_t *element = __q_ele_mid(head);
+    if (element == NULL)
+        return NULL;
+
+    list_del_init(&element->list);
+    q_release_element(element);
     return true;
 }
 
@@ -240,7 +255,10 @@ bool __q_ele_new(element_t **pptr_element, char *s)
 }
 
 /*
- * Self-defined function to generailize q_remove_tail and q_remove_head
+ * Self-defined function Created generic __q_remove function called by
+ * q_remove_head and q_remove_tail. It would remove the element from list and
+ * copy out element char array to specifed buffer (sp) with given length
+ * (bufsize).
  */
 element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize)
 {
@@ -254,4 +272,24 @@ element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize)
         sp[bufsize - 1] = '\0';
     }
     return element;
+}
+
+/*
+ * Find middle element of list
+ */
+element_t *__q_ele_mid(struct list_head *head)
+{
+    if (head == NULL || list_empty(head))
+        return NULL;
+    if (list_is_singular(head))
+        // cppcheck-suppress nullPointer
+        return list_first_entry(head, element_t, list);
+
+    struct list_head *slow = head;
+    for (struct list_head *fast = (head)->next;
+         fast != (head->prev) && fast != head; fast = fast->next->next) {
+        slow = slow->next;
+    }
+    // cppcheck-suppress nullPointer
+    return list_entry(slow->next, element_t, list);
 }
