@@ -57,8 +57,8 @@ void q_free(struct list_head *l)
         free(l);
         return;
     }
-    element_t *element, *n;
-    list_for_each_entry_safe (element, n, l, list) {
+    element_t *element, *safe;
+    list_for_each_entry_safe (element, safe, l, list) {
         q_release_element(element);
     }
     free(l);
@@ -184,6 +184,48 @@ bool q_delete_mid(struct list_head *head)
 bool q_delete_dup(struct list_head *head)
 {
     // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
+    if (!head || list_empty(head))
+        return false;
+    if (list_is_singular(head))
+        return true;
+    // Use two pointer to iterate through list
+    struct list_head *left = head->next;
+    struct list_head *right = head->next->next;
+    struct list_head *tmp;
+    bool dup_flag = false;
+    while (right != head) {
+        // If left value is equal to right value, entering inner while loop
+
+        while (right != head &&
+               !strcmp(
+                   // cppcheck-suppress nullPointer
+                   list_entry(left, element_t, list)->value,
+                   // cppcheck-suppress nullPointer
+                   list_entry(right, element_t, list)->value)) {
+            // Flip dup_flag to be true so that left pointer can be deleted
+            // properly when right value became another value
+            dup_flag = true;
+            tmp = right;
+            right = right->next;
+            list_del(tmp);
+            // cppcheck-suppress nullPointer
+            q_release_element(list_entry(tmp, element_t, list));
+        }
+        if (dup_flag) {
+            list_del(left);
+            // cppcheck-suppress nullPointer
+            q_release_element(list_entry(left, element_t, list));
+            dup_flag = false;
+            // Move left pointer to right pointer
+            left = right;
+        } else {
+            left = left->next;
+        }
+        if (right == head)
+            break;
+        right = right->next;
+    }
+
     return true;
 }
 
@@ -245,7 +287,7 @@ bool __q_ele_new(element_t **pptr_element, char *s)
         free(*pptr_element);
         return false;
     }
-    (*pptr_element)->value = malloc(sizeof(char) * (strlen(s) + 1));
+    (*pptr_element)->value = strdup(s);
     if ((*pptr_element)->value == NULL) {
         return false;
     }
