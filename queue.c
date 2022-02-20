@@ -26,7 +26,7 @@ bool __q_ele_new(element_t **pptr_element, char *s);
  * element_t point to newly allocated address of element_t with char array
  * initilized.
  */
-element_t *__q_remove(struct list_head *head, char *sp, size_t bufsize);
+element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize);
 
 /*
  * Create empty queue.
@@ -105,7 +105,7 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return __q_remove(head->next, sp, bufsize);
+    return __q_ele_remove(head->next, sp, bufsize);
 }
 
 /*
@@ -114,7 +114,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return __q_remove(head->prev, sp, bufsize);
+    return __q_ele_remove(head->prev, sp, bufsize);
 }
 
 /*
@@ -242,7 +242,7 @@ bool __q_ele_new(element_t **pptr_element, char *s)
 /*
  * Self-defined function to generailize q_remove_tail and q_remove_head
  */
-element_t *__q_remove(struct list_head *head, char *sp, size_t bufsize)
+element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize)
 {
     if (head == NULL || list_empty(head))
         return NULL;
