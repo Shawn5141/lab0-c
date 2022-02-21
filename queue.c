@@ -359,13 +359,14 @@ element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize)
 {
     if (head == NULL || list_empty(head))
         return NULL;
-    list_del_init(head);
+    if (!sp)
+        return NULL;
+
     // cppcheck-suppress nullPointer
     element_t *element = list_entry(head, element_t, list);
-    if (sp != NULL) {
-        strncpy(sp, element->value, (bufsize - 1));
-        sp[bufsize - 1] = '\0';
-    }
+    list_del_init(head);
+    strncpy(sp, element->value, (bufsize - 1));
+    sp[bufsize - 1] = '\0';
     return element;
 }
 
