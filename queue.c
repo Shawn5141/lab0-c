@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,17 @@ element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize);
  * Find middle element of list
  */
 element_t *__q_ele_mid(struct list_head *head);
+
+/*
+ * Merge 2 sorted list
+ */
+struct list_head *__merge_two_lists(struct list_head *left,
+                                    struct list_head *right);
+
+/*
+ *
+ */
+struct list_head *__mergesort(struct list_head *head);
 
 /*
  * Create empty queue.
@@ -290,7 +302,30 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    struct list_head *node = head->next, *ptr;
+
+    // Make it not cicular
+    head->prev->next = NULL;
+    head->next = NULL;
+
+    node = __mergesort(node);
+
+    // Make sure every list's prev and next is pointing to right place
+    ptr = head;
+    ptr->next = node;
+    while (ptr->next) {
+        ptr->next->prev = ptr;
+        ptr = ptr->next;
+    }
+    // Connect last node'next to head and head's prev to ndoe
+    ptr->next = head;
+    head->prev = ptr;
+}
 
 /*
  * Self-defined function: Allocate new node and let pointer to pointer to
@@ -352,4 +387,46 @@ element_t *__q_ele_mid(struct list_head *head)
     }
     // cppcheck-suppress nullPointer
     return list_entry(slow->next, element_t, list);
+}
+
+/*
+ * Merge to sorted linked list
+ * Inspired by https://hackmd.io/@sysprog/c-linked-list
+ */
+struct list_head *__merge_two_lists(struct list_head *left,
+                                    struct list_head *right)
+{
+    struct list_head *head = NULL, **ptr = &head, **node;
+
+    for (node = NULL; left && right; *node = (*node)->next) {
+        // cppcheck-suppress nullPointer
+        char *val1 = list_entry(left, element_t, list)->value;
+        // cppcheck-suppress nullPointer
+        char *val2 = list_entry(right, element_t, list)->value;
+        node = (strcmp(val1, val2) < 0) ? &left : &right;
+        *ptr = *node;
+        ptr = &(*ptr)->next;
+    }
+    *ptr = (struct list_head *) ((uintptr_t) left | (uintptr_t) right);
+    return head;
+}
+
+struct list_head *__mergesort(struct list_head *head)
+{
+    if (!head->next)
+        return head;
+
+    struct list_head *fast = head, *slow = head, *mid;
+    while (true) {
+        if (!fast->next || !fast->next->next)
+            break;
+        fast = fast->next->next;
+        slow = slow->next;
+    }
+
+    mid = slow->next;
+    slow->next = NULL;
+
+    struct list_head *left = __mergesort(head), *right = __mergesort(mid);
+    return __merge_two_lists(left, right);
 }
