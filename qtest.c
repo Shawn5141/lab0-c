@@ -718,7 +718,7 @@ static bool do_shuffle(int argc, char *argv[])
     error_check();
 
     set_noallocate_mode(true);
-    if (exception_setup(false))
+    if (exception_setup(true))
         q_shuffle(l_meta.l);
     exception_cancel();
 
