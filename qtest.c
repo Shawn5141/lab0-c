@@ -48,6 +48,10 @@
 #define BIG_LIST 30
 static int big_list_size = BIG_LIST;
 
+/*
+ *
+ */
+void q_shuffle(struct list_head *head);
 
 /* Global variables */
 
@@ -700,6 +704,30 @@ static bool is_circular()
     return true;
 }
 
+static bool do_shuffle(int argc, char *argv[])
+{
+    if (argc != 1) {
+        report(1, "%s takes no arguments", argv[0]);
+        return false;
+    }
+    if (!l_meta.l) {
+        report(3, "Warning: Try to access null queue");
+        return false;
+    }
+
+    error_check();
+
+    set_noallocate_mode(true);
+    if (exception_setup(false))
+        q_shuffle(l_meta.l);
+    exception_cancel();
+
+    set_noallocate_mode(false);
+
+    show_queue(3);
+    return !error_check();
+}
+
 static bool show_queue(int vlevel)
 {
     bool ok = true;
@@ -795,6 +823,7 @@ static void console_init()
         dedup, "                | Delete all nodes that have duplicate string");
     ADD_COMMAND(swap,
                 "                | Swap every two adjacent nodes in queue");
+    ADD_COMMAND(shuffle, "                | Shuffle list randomly");
     add_param("length", &string_length, "Maximum length of displayed string",
               NULL);
     add_param("malloc", &fail_probability, "Malloc failure probability percent",

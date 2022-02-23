@@ -39,6 +39,11 @@ element_t *__q_ele_remove(struct list_head *head, char *sp, size_t bufsize);
 element_t *__q_ele_mid(struct list_head *head);
 
 /*
+ *
+ */
+void __q_swap(struct list_head *left, struct list_head *right);
+
+/*
  * Merge 2 sorted list
  */
 struct list_head *__merge_two_lists(struct list_head *left,
@@ -328,6 +333,36 @@ void q_sort(struct list_head *head)
 }
 
 /*
+ * Follow Fisher–Yates shuffle algorithm
+ * for i from n−1 downto 1 do
+ *    j ← random integer such that 0 ≤ j ≤ i
+ *    exchange a[j] and a[i]
+ *    h(e90)-> n1(fa8) -> n2(ef8)
+ */
+void q_shuffle(struct list_head *head)
+{
+    if (!head || list_empty(head) || list_is_singular(head))
+        return;
+
+    int size = q_size(head);
+    struct list_head *node_array[size];
+    struct list_head *node;
+    int cnt = 0;
+    list_for_each (node, head) {
+        node_array[cnt++] = node;
+    }
+
+    struct list_head *tmp;
+    for (int i = size - 1; i > 0; i--) {
+        int num = (int) (rand() % i);
+        __q_swap(node_array[num], node_array[size - 1]);
+        tmp = node_array[size - 1];
+        node_array[size - 1] = node_array[num];
+        node_array[num] = tmp;
+    }
+}
+
+/*
  * Self-defined function: Allocate new node and let pointer to pointer to
  * element_t point to newly allocated address of element_t with char array
  * initilized.
@@ -432,4 +467,24 @@ struct list_head *__mergesort(struct list_head *head)
     mid = slow->next;
     slow->next = NULL;
     return __merge_two_lists(__mergesort(head), __mergesort(mid));
+}
+
+/*
+ * swap any given two list_head
+ */
+void __q_swap(struct list_head *l1, struct list_head *l2)
+{
+    struct list_head *l2_prev = l2->prev;
+    list_del(l2);
+
+    // replace
+    l2->next = l1->next;
+    l2->next->prev = l2;
+    l2->prev = l1->prev;
+    l2->prev->next = l2;
+
+    if (l2_prev == l1)
+        l2_prev = l2;
+
+    list_add(l1, l2_prev);
 }
